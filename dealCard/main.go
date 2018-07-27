@@ -53,19 +53,20 @@ func Handler(request events.APIGatewayProxyRequest) (events.APIGatewayProxyRespo
 		panic(err)
 	}
 
-	muskDrawn := room.MuskDrawn
+	muskDrawn := false
 
 	if !room.MuskDrawn {
 		fmt.Println("oof players", room.Players)
 		playersAmt := int(room.Players)
 		fmt.Println("oof playersAmt", playersAmt)
 		chance := rand.Intn(playersAmt)
-		if chance == room.Players {
+		fmt.Println("oof randomChance", chance)
+		if chance == 0 {
 			muskDrawn = true
+			room.MuskDrawn = true
 		}
 	}
 
-	room.MuskDrawn = muskDrawn
 	room.Players = room.Players - 1
 
 	updatedRoom, err := dynamodbattribute.MarshalMap(room)
