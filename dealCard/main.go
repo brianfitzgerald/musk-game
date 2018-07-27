@@ -42,7 +42,7 @@ func Handler(request events.APIGatewayProxyRequest) (events.APIGatewayProxyRespo
 		panic(err)
 	}
 
-	room := Room{}
+	room := model.Room{}
 
 	err = dynamodbattribute.UnmarshalMap(result.Item, room)
 
@@ -70,7 +70,7 @@ func Handler(request events.APIGatewayProxyRequest) (events.APIGatewayProxyRespo
 
 	input := &dynamodb.PutItemInput{
 		Item:      updatedRoom,
-		TableName: aws.String(tableName),
+		TableName: aws.String(model.TableName),
 	}
 
 	_, err = dynamoClient.PutItem(input)
