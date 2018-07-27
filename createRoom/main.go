@@ -13,18 +13,12 @@ import (
 	"github.com/aws/aws-sdk-go/aws/session"
 	"github.com/aws/aws-sdk-go/service/dynamodb"
 	"github.com/aws/aws-sdk-go/service/dynamodb/dynamodbattribute"
-	"github.com/aws/aws-sdk-go/service/sqs"
 )
-
-type Response struct {
-	RoomCode string `json:"RoomCode"`
-}
 
 var (
 	sess = session.Must(session.NewSessionWithOptions(session.Options{
 		SharedConfigState: session.SharedConfigEnable,
 	}))
-	sqsClient    = sqs.New(sess)
 	dynamoClient = dynamodb.New(sess)
 )
 
@@ -43,7 +37,7 @@ func Handler(request events.APIGatewayProxyRequest) (events.APIGatewayProxyRespo
 
 	room := model.Room{
 		Disaster:  chosenDisaster,
-		Code:      string(rand.Intn(1000)),
+		Code:      strconv.Itoa(rand.Intn(1000)),
 		Players:   playerNum,
 		MuskDrawn: false,
 	}
@@ -67,7 +61,10 @@ func Handler(request events.APIGatewayProxyRequest) (events.APIGatewayProxyRespo
 		panic(err)
 	}
 
-	return events.APIGatewayProxyResponse{Body: string(roomString), StatusCode: 200}, nil
+	return events.APIGatewayProxyResponse{Body: string(roomString), StatusCode: 200, Headers: map[string]string{
+		"Access-Control-Allow-Origin":      "*",    // Required for CORS support to work
+		"Access-Control-Allow-Credentials": "true", // Required for cookies, authorization headers with HTTPS
+	}}, nil
 }
 
 func main() {

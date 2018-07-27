@@ -1,6 +1,7 @@
 package main
 
 import (
+	"fmt"
 	"math/rand"
 	"musk-game/model"
 
@@ -10,24 +11,21 @@ import (
 	"github.com/aws/aws-sdk-go/aws/session"
 	"github.com/aws/aws-sdk-go/service/dynamodb"
 	"github.com/aws/aws-sdk-go/service/dynamodb/dynamodbattribute"
-	"github.com/aws/aws-sdk-go/service/sqs"
 )
 
 var (
 	sess = session.Must(session.NewSessionWithOptions(session.Options{
 		SharedConfigState: session.SharedConfigEnable,
 	}))
-	sqsClient    = sqs.New(sess)
 	dynamoClient = dynamodb.New(sess)
 )
-
-type Response struct {
-	Draw string `json:"message"`
-}
 
 func Handler(request events.APIGatewayProxyRequest) (events.APIGatewayProxyResponse, error) {
 
 	roomCode := request.QueryStringParameters["code"]
+
+	println("model.TableName", model.TableName)
+	println("roomCode", roomCode)
 
 	result, err := dynamoClient.GetItem(&dynamodb.GetItemInput{
 		TableName: aws.String(model.TableName),
@@ -38,11 +36,16 @@ func Handler(request events.APIGatewayProxyRequest) (events.APIGatewayProxyRespo
 		},
 	})
 
+	fmt.Println("oof result", result)
+	fmt.Println("oof err", err)
+
 	if err != nil {
 		panic(err)
 	}
 
-	room := model.Room{}
+	room := &model.Room{}
+
+	fmt.Println("oof room", result)
 
 	err = dynamodbattribute.UnmarshalMap(result.Item, room)
 
@@ -53,7 +56,10 @@ func Handler(request events.APIGatewayProxyRequest) (events.APIGatewayProxyRespo
 	muskDrawn := room.MuskDrawn
 
 	if !room.MuskDrawn {
-		chance := rand.Intn(room.Players)
+		fmt.Println("oof players", room.Players)
+		playersAmt := int(room.Players)
+		fmt.Println("oof playersAmt", playersAmt)
+		chance := rand.Intn(playersAmt)
 		if chance == room.Players {
 			muskDrawn = true
 		}
@@ -85,7 +91,10 @@ func Handler(request events.APIGatewayProxyRequest) (events.APIGatewayProxyRespo
 		draw = "Elon Musk"
 	}
 
-	return events.APIGatewayProxyResponse{Body: draw, StatusCode: 200}, nil
+	return events.APIGatewayProxyResponse{Body: draw, StatusCode: 200, Headers: map[string]string{
+		"Access-Control-Allow-Origin":      "*",    // Required for CORS support to work
+		"Access-Control-Allow-Credentials": "true", // Required for cookies, authorization headers with HTTPS
+	}}, nil
 }
 
 func main() {
