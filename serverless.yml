@@ -20,6 +20,13 @@ service: elon-musk
 provider:
   name: aws
   runtime: go1.x
+  iamRoleStatements:
+    - Effect: "Allow"
+      Action:
+        - "dynamodb:*"
+      Resource:
+        - "arn:aws:dynamodb:us-east-1:288184449763:table/musk-game-rooms"
+
 
 # you can overwrite defaults here
 #  stage: dev
@@ -65,14 +72,18 @@ functions:
           path: dealCard
           method: put
 
-# you can add CloudFormation resource templates here
-#resources:
-#  Resources:
-#    NewResource:
-#      Type: AWS::S3::Bucket
-#      Properties:
-#        BucketName: my-new-bucket
-#  Outputs:
-#     NewOutput:
-#       Description: "Description for the output"
-#       Value: "Some output value"
+resources:
+  Resources:
+    keyDataTable:
+      Type: AWS::DynamoDB::Table
+      Properties:
+          TableName: musk-game-rooms
+          AttributeDefinitions:
+              - AttributeName: Code
+                AttributeType: S
+          KeySchema:
+              - AttributeName: Code
+                KeyType: HASH
+          ProvisionedThroughput:
+            ReadCapacityUnits: 1
+            WriteCapacityUnits: 1
