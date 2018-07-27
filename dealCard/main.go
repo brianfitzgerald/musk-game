@@ -2,6 +2,7 @@ package main
 
 import (
 	"math/rand"
+	"musk-game/model"
 
 	"github.com/aws/aws-lambda-go/events"
 	"github.com/aws/aws-lambda-go/lambda"
@@ -10,17 +11,6 @@ import (
 	"github.com/aws/aws-sdk-go/service/dynamodb"
 	"github.com/aws/aws-sdk-go/service/dynamodb/dynamodbattribute"
 	"github.com/aws/aws-sdk-go/service/sqs"
-)
-
-type Room struct {
-	Players   int
-	MuskDrawn bool
-	Code      string
-	Disaster  string
-}
-
-const (
-	tableName = "musk-game-rooms"
 )
 
 var (
@@ -35,12 +25,12 @@ type Response struct {
 	Draw string `json:"message"`
 }
 
-func Handler(request events.APIGatewayProxyRequest) (Response, error) {
+func Handler(request events.APIGatewayProxyRequest) (events.APIGatewayProxyResponse, error) {
 
 	roomCode := request.QueryStringParameters["code"]
 
 	result, err := dynamoClient.GetItem(&dynamodb.GetItemInput{
-		TableName: aws.String(tableName),
+		TableName: aws.String(model.TableName),
 		Key: map[string]*dynamodb.AttributeValue{
 			"Code": {
 				S: aws.String(roomCode),
@@ -95,9 +85,7 @@ func Handler(request events.APIGatewayProxyRequest) (Response, error) {
 		draw = "Elon Musk"
 	}
 
-	return Response{
-		Draw: draw,
-	}, nil
+	return events.APIGatewayProxyResponse{Body: draw, StatusCode: 200}, nil
 }
 
 func main() {

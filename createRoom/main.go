@@ -1,7 +1,10 @@
 package main
 
 import (
+	"encoding/json"
 	"math/rand"
+	"musk-game/model"
+	"strconv"
 	"time"
 
 	"github.com/aws/aws-lambda-go/events"
@@ -17,17 +20,6 @@ type Response struct {
 	RoomCode string `json:"RoomCode"`
 }
 
-type Room struct {
-	Players   int
-	MuskDrawn bool
-	Code      string
-	Disaster  string
-}
-
-const (
-	tableName = "musk-game-rooms"
-)
-
 var (
 	sess = session.Must(session.NewSessionWithOptions(session.Options{
 		SharedConfigState: session.SharedConfigEnable,
@@ -36,17 +28,23 @@ var (
 	dynamoClient = dynamodb.New(sess)
 )
 
-func Handler(request events.APIGatewayProxyRequest) (Response, error) {
+func Handler(request events.APIGatewayProxyRequest) (events.APIGatewayProxyResponse, error) {
 
 	disasters := []string{"World Hunger", "Obesity"}
 
 	rand.Seed(time.Now().Unix()) // initialize global pseudo random generator
 	chosenDisaster := disasters[rand.Intn(len(disasters))]
 
-	room := Room{
+	playerNum, err := strconv.Atoi(request.QueryStringParameters["players"])
+
+	if err != nil {
+		panic(err)
+	}
+
+	room := model.Room{
 		Disaster:  chosenDisaster,
 		Code:      string(rand.Intn(1000)),
-		Players:   request.QueryStringParameters["players"],
+		Players:   playerNum,
 		MuskDrawn: false,
 	}
 
@@ -54,7 +52,7 @@ func Handler(request events.APIGatewayProxyRequest) (Response, error) {
 
 	input := &dynamodb.PutItemInput{
 		Item:      st,
-		TableName: aws.String(tableName),
+		TableName: aws.String(model.TableName),
 	}
 
 	_, err = dynamoClient.PutItem(input)
@@ -63,9 +61,13 @@ func Handler(request events.APIGatewayProxyRequest) (Response, error) {
 		panic(err)
 	}
 
-	return Response{
-		RoomCode: room.Code,
-	}, nil
+	roomString, err := json.Marshal(room)
+
+	if err != nil {
+		panic(err)
+	}
+
+	return events.APIGatewayProxyResponse{Body: string(roomString), StatusCode: 200}, nil
 }
 
 func main() {
