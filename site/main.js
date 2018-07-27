@@ -24,7 +24,7 @@ document.getElementById(createRoom).addEventListener("click", function(){
 
 document.getElementById(drawButton).addEventListener("click", function(){
     roomCode = document.getElementById(roomCodeEntry).value
-    fetch(`${apiURL}/drawCard?code=${roomCodeEntry}`, {
+    fetch(`${apiURL}/dealCard?code=${roomCodeEntry}`, {
         method: 'PUT'
     }).then((res) => {
         console.log(res.json().then((val) => {
