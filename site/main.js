@@ -33,7 +33,7 @@ document.getElementById(drawButton).addEventListener("click", function(){
         console.log(res.status)
         console.log(res.text().then((val) => {
             console.log(val)
-            document.getElementById(roleOutput).innerHTML = `${val}`
+            document.getElementById(roleOutput).innerHTML = `You drew: ${val}`
         }))
     }).catch((err) => {
         console.log(err)

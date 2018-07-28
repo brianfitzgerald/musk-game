@@ -1,0 +1,1 @@
+aws s3 sync ./site s3://musk-game --profile personal --acl public-read
